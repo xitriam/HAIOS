@@ -14,6 +14,6 @@ Stable oznacza odebraną poprzednią wersję eksperymentalną, nie przydatność
 
 Własny kod: Apache 2.0. Limine, Rust i font DejaVu mają odrębne licencje/notices. Paczki zawierają ISO, ELF, pełne publiczne źródła, licencje i sumy SHA256. Wbudowany komunikat wersji może zawierać -dev: wszystkie trzy wydania są eksperymentalne.
 
-Obsługiwane środowisko: QEMU q35/KVM x86_64, jeden CPU, 256 MiB, BIOS/UEFI. Bez bare metal, instalatora na fizyczny dysk, sieci gościa, GUI okienkowego, SMP, pełnego POSIX, FPU i AI. Nigdy nie przekazuj fizycznego dysku do gościa. Publiczne repozytorium zawiera wyłącznie produkt; wewnętrzne audyty gospodarzy i konfiguracja sieci nie są publikowane.
+Obsługiwane środowisko: QEMU q35/KVM x86_64, jeden CPU, 256 MiB, BIOS/UEFI. Bez bare metal, instalatora na fizyczny dysk, sieci gościa, GUI okienkowego, SMP, pełnego POSIX, FPU i AI. Nigdy nie przekazuj fizycznego dysku do gościa.
 
 Źródła tego tagu: **0.1.0 (old)**.
