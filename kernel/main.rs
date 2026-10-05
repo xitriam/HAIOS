@@ -9,6 +9,11 @@ use core::arch::global_asm;
 #[path = "../ipc/mailbox.rs"] mod mailbox;
 #[path = "../scheduler/process.rs"] mod process;
 mod console;
+mod power;
+mod editor;
+#[path = "../drivers/framebuffer/mod.rs"] mod framebuffer;
+#[path = "../drivers/keyboard/mod.rs"] mod keyboard;
+#[path = "../fs/mod.rs"] mod fs;
 global_asm!(include_str!("../arch/x86_64/entry.S"));
 unsafe extern "C" { fn haios_halt() -> !; }
 fn halt() -> ! { unsafe { haios_halt() } }
@@ -26,6 +31,9 @@ pub extern "C" fn kernel_main() -> ! {
                 && serial::write(b" usable_bytes=") && serial::number(summary.usable_bytes)
                 && serial::write(b"\nHAIOS:BOOT:OK\n");
             if !ok { halt(); }
+            match limine::framebuffer() { Ok(c) => { framebuffer::init(c); serial::write(b"HAIOS:VIDEO:OK\n"); }, Err(e) => { serial::write(e); serial::write(b"\nHAIOS:VIDEO:UNAVAILABLE\n"); } }
+            if keyboard::init() { serial::write(b"HAIOS:KEYBOARD:OK\n"); } else { serial::write(b"HAIOS:KEYBOARD:UNAVAILABLE\n"); }
+            fs::init();
             interrupts::init();
             memory::vmm::init(summary.hhdm_offset);
             console::ready();

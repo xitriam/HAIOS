@@ -1,0 +1,14 @@
+//! Set-1 decoder after controller translation, Polish programmer AltGr layout.
+use crate::editor::Key;
+pub struct Decoder{extended:bool,skip:u8,left:bool,right:bool,control:bool,altgr:bool,caps:bool,caps_down:bool}
+impl Decoder{pub const fn new()->Self{Self{extended:false,skip:0,left:false,right:false,control:false,altgr:false,caps:false,caps_down:false}}
+ pub fn byte(&mut self,b:u8)->Option<Key>{if self.skip>0{self.skip-=1;return None;}if b==0xe1{self.skip=5;return None;}if b==0xe0{self.extended=true;return None;}let extended=self.extended;self.extended=false;let release=b&128!=0;let code=b&127;
+ match(code,extended){(0x2a,false)=>{self.left=!release;return None;},(0x36,false)=>{self.right=!release;return None;},(0x1d,_)=>{self.control=!release;return None;},(0x38,true)=>{self.altgr=!release;return None;},(0x3a,false)=>{if release{self.caps_down=false;}else if !self.caps_down{self.caps=!self.caps;self.caps_down=true;}return None;},_=>{}}
+ if release{return None;}let key=match code{0x1c=>Some(Key::Enter),0x0e=>Some(Key::Backspace),0x0f=>Some(Key::Tab),0x47=>Some(Key::Home),0x4f=>Some(Key::End),0x48=>Some(Key::Up),0x50=>Some(Key::Down),0x4b=>Some(Key::Left),0x4d=>Some(Key::Right),0x53=>Some(Key::Delete),_=>None};if key.is_some(){return key;}if extended{return None;}
+ let plain=match code{2=>'1',3=>'2',4=>'3',5=>'4',6=>'5',7=>'6',8=>'7',9=>'8',10=>'9',11=>'0',12=>'-',13=>'=',16=>'q',17=>'w',18=>'e',19=>'r',20=>'t',21=>'y',22=>'u',23=>'i',24=>'o',25=>'p',26=>'[',27=>']',30=>'a',31=>'s',32=>'d',33=>'f',34=>'g',35=>'h',36=>'j',37=>'k',38=>'l',39=>';',40=>'\'',41=>'`',43=>'\\',44=>'z',45=>'x',46=>'c',47=>'v',48=>'b',49=>'n',50=>'m',51=>',',52=>'.',53=>'/',57=>' ',_=>return None};
+ if self.control{return match plain{'c'|'u'=>Some(Key::Cancel),'a'=>Some(Key::Home),'e'=>Some(Key::End),_=>None};}
+ let shift=self.left||self.right;let upper=shift^self.caps;
+ let ch=if self.altgr{let c=match plain{'a'=>'ą','c'=>'ć','e'=>'ę','l'=>'ł','n'=>'ń','o'=>'ó','s'=>'ś','x'=>'ź','z'=>'ż',_=>return None};if upper{c.to_uppercase().next().unwrap()}else{c}}
+ else if plain.is_ascii_alphabetic(){if upper{plain.to_ascii_uppercase()}else{plain}}else if shift{match plain{'1'=>'!','2'=>'@','3'=>'#','4'=>'$','5'=>'%','6'=>'^','7'=>'&','8'=>'*','9'=>'(','0'=>')','-'=>'_','='=>'+','['=>'{',']'=>'}',';'=>':','\''=>'"','`'=>'~','\\'=>'|',','=>'<','.'=>'>','/'=>'?',c=>c}}else{plain};Some(Key::Char(ch))
+ }}
+#[cfg(test)]mod tests{use super::*;#[test]fn modifiers(){let mut d=Decoder::new();assert_eq!(d.byte(30),Some(Key::Char('a')));d.byte(0x2a);d.byte(0x36);d.byte(0xaa);assert_eq!(d.byte(30),Some(Key::Char('A')));d.byte(0xb6);d.byte(0xe0);d.byte(0x38);assert_eq!(d.byte(30),Some(Key::Char('ą')));d.byte(0xe0);d.byte(0xb8);d.byte(0xe0);assert_eq!(d.byte(0x4b),Some(Key::Left));d.byte(0xe0);assert_eq!(d.byte(0xcb),None);assert_eq!(d.byte(0xfa),None);}}
