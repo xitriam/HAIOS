@@ -16,4 +16,4 @@ Własny kod: Apache 2.0. Limine, Rust i font DejaVu mają odrębne licencje/noti
 
 Obsługiwane środowisko: QEMU q35/KVM x86_64, jeden CPU, 256 MiB, BIOS/UEFI. Bez bare metal, instalatora na fizyczny dysk, sieci gościa, GUI okienkowego, SMP, pełnego POSIX, FPU i AI. Nigdy nie przekazuj fizycznego dysku do gościa. Publiczne repozytorium zawiera wyłącznie produkt; wewnętrzne audyty gospodarzy i konfiguracja sieci nie są publikowane.
 
-Źródła tego tagu: **0.2.0 (stable)**.
+Źródła tego tagu: **0.3.0 (candidate)**.

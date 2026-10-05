@@ -14,7 +14,7 @@
     1,
     16
   ],
-  "chars": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ąćęłńóśźżĄĆĘŁŃÓŚŹŻ",
+  "chars": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ąćęłńóśźżĄĆĘŁŃÓŚŹŻ—×",
   "coverage_bits": 4,
-  "atlas_sha256": "bb784cc1f6562724c20c9052f92fb9dc8a6c834fb5727c66c4b73566adad0039"
+  "atlas_sha256": "d1fd779afe909b0c6cc75a70cc7478a5484e55fd970be480597141c3df4000de"
 }

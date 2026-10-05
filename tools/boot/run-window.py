@@ -2,7 +2,8 @@
 """User framebuffer through password-protected loopback VNC and SSH."""
 import argparse,fcntl,json,os,secrets,signal,socket,subprocess,tempfile,time
 from pathlib import Path
-p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);p.add_argument('--vnc-port',type=int,default=5901);p.add_argument('--password-file',type=Path);a=p.parse_args();out=a.out.resolve()
+from data_disk import locked_disk,device_args
+p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);p.add_argument('--disk',type=Path);p.add_argument('--vnc-port',type=int,default=5901);p.add_argument('--password-file',type=Path);a=p.parse_args();out=a.out.resolve();disk_lock,disk_path=locked_disk(a.disk or out/'haios-data.img')
 if not 5900<=a.vnc_port<=5999:raise SystemExit('VNC port must be 5900..5999')
 lock=(out/'window.lock').open('w')
 try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -16,7 +17,8 @@ password=password_path.read_text().strip()
 if len(password)!=8 or not password.isascii():raise SystemExit('Expected eight ASCII characters')
 with tempfile.TemporaryDirectory(prefix='haios-window-') as td:
  w=Path(td);qmp=w/'qmp';session_file=out/'window-session.json'
- cmd=['qemu-system-x86_64','-machine','q35,accel=kvm','-cpu','host','-smp','1','-m','256M','-vnc',f'127.0.0.1:{a.vnc_port-5900},password=on','-monitor','none','-serial',f'file:{out}/window.serial','-qmp',f'unix:{qmp},server=on,wait=off','-nic','none','-no-reboot','-boot','d','-drive',f'file={out}/haios.iso,media=cdrom,readonly=on,format=raw']
+ cmd=['qemu-system-x86_64','-machine','q35,accel=kvm','-cpu','host','-smp','1','-m','256M','-vnc',f'127.0.0.1:{a.vnc_port-5900},password=on','-monitor','none','-serial',f'file:{out}/window.serial','-qmp',f'unix:{qmp},server=on,wait=off','-nic','none','-boot','d','-drive',f'file={out}/haios.iso,media=cdrom,readonly=on,format=raw']
+ cmd+=device_args(disk_path)
  vm=subprocess.Popen(cmd)
  def stop(signum,frame):raise KeyboardInterrupt
  for sig in [signal.SIGTERM,signal.SIGHUP]:signal.signal(sig,stop)

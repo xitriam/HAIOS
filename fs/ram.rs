@@ -39,6 +39,15 @@ impl Fs{
     }
     pub fn protect(&mut self,path:&str)->Result<(),Error>{let i=self.find(path)?;self.nodes[i].readonly=true;Ok(())}
     pub fn list(&self,path:&str,mut visit:impl FnMut(&str,bool,usize,bool))->Result<(),Error>{self.is_dir(path)?;for n in &self.nodes{if n.used&&n.name.as_str()!=path&&Self::parent(n.name.as_str())==path{let name=n.name.as_str().rsplit('/').next().unwrap();visit(name,n.directory,n.len,n.readonly);}}Ok(())}
+    pub fn durable_capacity(&self)->usize{NODES-self.nodes.iter().filter(|n|n.used&&(n.readonly||n.name.as_str()=="/")).count()}
+    pub fn durable_export(&self,out:&mut[u8])->Result<(),Error>{if out.len()!=super::checkpoint::PAYLOAD{return Err(Error::Invalid);}out.fill(0);let mut index=0;
+        for n in &self.nodes{if !n.used||n.readonly||n.name.as_str()=="/"{continue;}let b=&mut out[index*super::checkpoint::RECORD..(index+1)*super::checkpoint::RECORD];b[0]=if n.directory{2}else{1};b[1]=n.name.len as u8;b[2..4].copy_from_slice(&(n.len as u16).to_le_bytes());b[4..4+n.name.len].copy_from_slice(&n.name.bytes[..n.name.len]);b[132..132+n.len].copy_from_slice(&n.data[..n.len]);index+=1;}Ok(())
+    }
+    pub fn durable_import(&mut self,bytes:&[u8])->Result<(),Error>{let keep=self.nodes.iter().filter(|n|n.used&&(n.readonly||n.name.as_str()=="/")).count();super::checkpoint::validate(bytes,NODES-keep).map_err(|_|Error::Invalid)?;
+        for n in &mut self.nodes{if n.used&&!n.readonly&&n.name.as_str()!="/"{*n=EMPTY;}}
+        // All relationships already validated; fill nodes directly, independent of record order.
+        for b in bytes.chunks_exact(super::checkpoint::RECORD){if let Some((name,dir,data))=super::checkpoint::record(b).map_err(|_|Error::Invalid)?{let i=self.nodes.iter().position(|n|!n.used).ok_or(Error::Capacity)?;let n=&mut self.nodes[i];*n=EMPTY;n.used=true;n.directory=dir;n.name=normalize("/",name)?;n.len=data.len();n.data[..data.len()].copy_from_slice(data);}}Ok(())
+    }
     pub fn usage(&self)->(usize,usize){(self.nodes.iter().filter(|n|n.used).count(),self.nodes.iter().filter(|n|n.used&&!n.directory).map(|n|n.len).sum())}
 }
 #[cfg(test)]mod tests{use super::*;

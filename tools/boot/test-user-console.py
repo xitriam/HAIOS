@@ -42,10 +42,10 @@ with tempfile.TemporaryDirectory(prefix='haios-user-console-') as td:
    for ch in text:key('spc' if ch==' ' else ch)
   wait(rb'haios> ',timeout=25)
   assert b'HAIOS:VIDEO:OK' in transcript and b'HAIOS:KEYBOARD:OK' in transcript,bytes(transcript)
-  start=len(transcript);type_ps2('versio');key('n');key('ret');wait(rb'HAIOS 0.2.0-dev',start);checks.append('PS/2 text input enters guest command')
-  start=len(transcript);type_ps2('verxion');key('home');key('right');key('right');key('right');key('delete');key('s');key('end');key('ret');wait(rb'HAIOS 0.2.0-dev',start);checks.append('PS/2 cursor, Home/End and Delete insertion')
-  start=len(transcript);key('up');key('ret');wait(rb'HAIOS 0.2.0-dev',start);checks.append('PS/2 history replay')
-  start=len(transcript);type_ps2('vers');key('tab');key('ret');wait(rb'HAIOS 0.2.0-dev',start);checks.append('PS/2 command completion')
+  start=len(transcript);type_ps2('versio');key('n');key('ret');wait(rb'HAIOS 0.3.0-dev',start);checks.append('PS/2 text input enters guest command')
+  start=len(transcript);type_ps2('verxion');key('home');key('right');key('right');key('right');key('delete');key('s');key('end');key('ret');wait(rb'HAIOS 0.3.0-dev',start);checks.append('PS/2 cursor, Home/End and Delete insertion')
+  start=len(transcript);key('up');key('ret');wait(rb'HAIOS 0.3.0-dev',start);checks.append('PS/2 history replay')
+  start=len(transcript);type_ps2('vers');key('tab');key('ret');wait(rb'HAIOS 0.3.0-dev',start);checks.append('PS/2 command completion')
   # Actual Shift produces a distinct uppercase directory; both case variants work.
   start=len(transcript);type_ps2('mkdir ');key('shift','p');type_ps2('roba');key('ret');time.sleep(.1)
   send('cd /Proba',rb'haios> ');send('pwd',rb'\n/Proba\n');send('cd /',rb'haios> ')
@@ -55,7 +55,7 @@ with tempfile.TemporaryDirectory(prefix='haios-user-console-') as td:
   start=len(transcript);type_ps2('write polski ')
   for code in ['z','o','l','c']:key('alt_r',code)
   key('ret');wait(rb'OK zapisano',start);send('cat polski','żółć'.encode());checks.append('PS/2 AltGr Polish programmer characters')
-  send('edit dane/test',rb'Nowa tre');send('Pierwszy wiersz',rb'edit> ');send('Drugi wiersz',rb'edit> ');send('.save',rb'OK zapisano');send('cat dane/test',rb'Pierwszy wiersz\nDrugi wiersz');send('edit dane/test',rb'Nowa tre');send('Zmienione',rb'edit> ');send('.cancel',rb'Anulowano');send('cat dane/test',rb'Pierwszy wiersz\nDrugi wiersz');checks.append('Multiline edit commit/cancel preserves file')
+  send('edit dane/test',rb'Nowa tre');send('.clear',rb'edit> ');send('Pierwszy wiersz',rb'edit> ');send('Drugi wiersz',rb'edit> ');send('.save',rb'OK zapisano');send('cat dane/test',rb'Pierwszy wiersz\nDrugi wiersz');send('edit dane/test',rb'Nowa tre');send('Zmienione',rb'edit> ');send('.cancel',rb'Anulowano');send('cat dane/test',rb'Pierwszy wiersz\nDrugi wiersz');checks.append('Multiline edit commit/cancel preserves file')
   send('write /bin/hello zmiana',rb'ERROR RAMFS');send('touch /bin/nowy',rb'ERROR RAMFS');send('rm dane',rb'ERROR RAMFS');send('cat nieistnieje',rb'ERROR RAMFS');checks.append('Read-only program files and invalid operations')
   def program(command,pattern):
    mark=len(transcript);serial.sendall(command.encode()+b'\n');wait(pattern,mark);wait(rb'PROC:EXIT pid=\d+\n',mark)
@@ -69,7 +69,7 @@ with tempfile.TemporaryDirectory(prefix='haios-user-console-') as td:
   program('wc brak',rb'ERROR wc:')
   program('run fsbadptr',rb'fsbadptr:ok\n')
   checks.append('Ring3 echo/uptime/wc/calc, signed limits and readfile pointer/output validation')
-  send('clear',rb'haios> ');send('help',rb'Dane znikaj');send('cat polski','żółć'.encode());time.sleep(.2);program('echo p P proba Proba g G q Q y Y','p P proba Proba g G q Q y Y'.encode());program('echo Zażółć gęślą jaźń ĄĆĘŁŃÓŚŹŻ','Zażółć gęślą jaźń ĄĆĘŁŃÓŚŹŻ'.encode());time.sleep(.2);qmp('screendump',{'filename':str(out/f'user-console-{firmware}.ppm')});checks.append('Actual framebuffer captured after guest keyboard and commands')
+  send('clear',rb'haios> ');send('help sync',rb'sync utrwala');send('cat polski','żółć'.encode());time.sleep(.2);program('echo p P proba Proba g G q Q y Y','p P proba Proba g G q Q y Y'.encode());program('echo Zażółć gęślą jaźń ĄĆĘŁŃÓŚŹŻ','Zażółć gęślą jaźń ĄĆĘŁŃÓŚŹŻ'.encode());time.sleep(.2);qmp('screendump',{'filename':str(out/f'user-console-{firmware}.ppm')});checks.append('Actual framebuffer captured after guest keyboard and commands')
   send('rm dane/test',rb'haios> ');send('rm dane',rb'haios> ');send('rm polski',rb'haios> ');send('cd /',rb'haios> ')
   before=send('stat',rb'RAMFS nodes=(\d+)/32 bytes=(\d+)\n').groups();base=int(send('mem',rb'MEM free_frames=(\d+) page_bytes=').group(1))
   # Whole-file and node capacity failures must not change data or leak a slot.

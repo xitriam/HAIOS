@@ -33,8 +33,8 @@ with tempfile.TemporaryDirectory(prefix='haios-console-')as directory:
             wait(rb'haios> ',timeout=25)
             assert b'HAIOS:CONSOLE:READY' in transcript and b'HAIOS:PMM:OK' in transcript
             checks.append('boot/PMM/interactive prompt')
-            send('help',rb'Programs: hello count ipc fault writefault badptr spin')
-            send('version',rb'HAIOS 0.2.0-dev console')
+            send('help',rb'help calc')
+            send('version',rb'HAIOS 0.3.0-dev console')
             base=int(send('mem',rb'MEM free_frames=(\d+) page_bytes=').group(1))
             start=len(transcript);channel.sendall(b'run hello\n');wait(rb'hello:world\n',start);wait(rb'PROC:EXIT pid=\d+',start)
             assert int(send('mem',rb'MEM free_frames=(\d+) page_bytes=').group(1))==base
@@ -61,7 +61,7 @@ with tempfile.TemporaryDirectory(prefix='haios-console-')as directory:
             wait(rb'PROC:EXIT pid=\d+\n[\s\S]*PROC:EXIT pid=\d+',start)
             assert int(send('mem',rb'MEM free_frames=(\d+) page_bytes=').group(1))==base
             checks.append('IPC FIFO demonstration and teardown')
-            send('wrong',rb'ERROR command');send('x'*97,rb'ERROR line too long');send('ls',rb'RAM: hello');send('cat about',rb'HAIOS RAM image')
+            send('wrong',rb'ERROR command');send('x'*97,rb'ERROR line too long');send('ls',rb'RAM: hello');send('cat about',rb'HAIOS 0.3:')
             checks.append('invalid/long commands and RAM catalog')
             # Four fixed slots; failure creating an IPC pair must unwind its first child.
             spins=[int(send('run spin',rb'PROC:START pid=(\d+) name=spin').group(1))for _ in range(3)]
