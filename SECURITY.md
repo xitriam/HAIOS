@@ -1,0 +1,1 @@
+Eksperymentalny system przeznaczony do VM i danych demonstracyjnych. Błędy zgłaszaj przez GitHub Issues bez sekretów, prywatnych plików i pełnych logów infrastruktury. Nie przekazuj fizycznych urządzeń dyskowych do VM. Nie używaj do danych produkcyjnych.

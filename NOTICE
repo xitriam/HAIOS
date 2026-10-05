@@ -1,0 +1,14 @@
+HAIOS — Human × Artificial Intelligence Operating System
+Copyright 2026 HAIOS contributors
+
+The original HAIOS code and documentation are licensed under Apache License 2.0.
+Third-party components retain their own licenses and notices. See THIRD_PARTY.md.
+
+The Limine protocol identifiers and ABI layouts in boot/limine.rs derive from
+limine-protocol commit 3a0526b700e356f0eac1b71a77697b3fd1c707a3 (0BSD).
+Copyright (C) 2022-2026 Mintsuki and contributors.
+
+Bootable images include Limine 12.9.2 and Rust 1.99.0 runtime components.
+Their upstream notices are supplied under licenses/limine and licenses/rust.
+The Rust notice inventory covers the standard library as a whole and does not
+imply that every listed component is linked into this minimal kernel.
