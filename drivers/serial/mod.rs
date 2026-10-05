@@ -18,6 +18,11 @@ pub fn init() {
     }
 }
 pub fn write(bytes: &[u8]) -> bool {
+    crate::framebuffer::write(bytes);
+    log(bytes)
+}
+/// Diagnostics retained on COM1 without cluttering the user screen.
+pub fn log(bytes: &[u8]) -> bool {
     for &byte in bytes {
         let mut ready = false;
         for _ in 0..1_000_000 {
@@ -42,3 +47,5 @@ pub fn number(mut value: u64) -> bool {
 pub fn read() -> Option<u8> {
     if unsafe { input(BASE+5) } & 1 == 0 {None} else {Some(unsafe {input(BASE)})}
 }
+
+pub fn log_number(mut value:u64)->bool{let mut b=[0;20];let mut i=20;loop{i-=1;b[i]=b'0'+(value%10)as u8;value/=10;if value==0{break;}}log(&b[i..])}

@@ -31,6 +31,7 @@ shutil.copy2(limine/'BOOTX64.EFI', stage/'EFI/BOOT/BOOTX64.EFI')
 # Preserve each component's notices without relabeling upstream code as HAIOS.
 for name in ['LICENSE', 'NOTICE', 'THIRD_PARTY.md']:
     shutil.copy2(root/name, stage/name)
+shutil.copytree(root/'licenses/dejavu',stage/'licenses/dejavu',dirs_exist_ok=True)
 (stage/'licenses/limine').mkdir(parents=True, exist_ok=True)
 for name in ['LICENSE', '3RDPARTY.md']:
     shutil.copy2(limine/name, stage/'licenses/limine'/name)
