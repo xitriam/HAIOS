@@ -8,4 +8,4 @@ python3 tools/boot/build.py --out /tmp/haios-build
 python3 tools/boot/verify-notices.py --out /tmp/haios-build
 ```
 
-Skrypt toolchain instaluje przypięte narzędzia w katalogu aktualnego użytkownika (~/.cargo, ~/.rustup, ~/.local/share/haios/toolchain). Przeczytaj go przed użyciem; nie wymaga sudo. Kompilacja musi mieć output poza drzewem źródeł. Narzędzia i notices pochodzą z oficjalnych wydań upstream. Build zapisuje wejścia i sumy ISO/ELF w build.json. ISO zawiera znaczniki czasu; identyczność ISO nie jest obiecana. Źródła nie są historią prywatnych audytów.
+Skrypt toolchain instaluje przypięte narzędzia w katalogu aktualnego użytkownika (~/.cargo, ~/.rustup, ~/.local/share/haios/toolchain). Przeczytaj go przed użyciem; nie wymaga sudo. Kompilacja musi mieć output poza drzewem źródeł. Narzędzia i notices pochodzą z oficjalnych wydań upstream. Build zapisuje wejścia i sumy ISO/ELF w build.json. ISO zawiera znaczniki czasu; identyczność ISO nie jest obiecana.
