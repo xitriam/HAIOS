@@ -16,8 +16,8 @@ pub fn init(offset:u64){unsafe{
 }}
 pub fn kernel(){unsafe{asm!("mov cr3,{}",in(reg)KERNEL_ROOT,options(nostack));}}
 pub fn activate(space:&Space){unsafe{asm!("mov cr3,{}",in(reg)space.root,options(nostack));}}
-pub fn create(code:&[u8],args:&[u8])->Option<Space>{
-    if code.is_empty()||code.len()>4096||args.len()>256{return None;}
+pub fn create(code:&[u8])->Option<Space>{
+    if code.is_empty()||code.len()>4096{return None;}
     let mut s=Space::empty();
     for i in 0..7{match memory::alloc(){Some(p)=>{s.owned[i]=p;unsafe{ptr::write_bytes(pointer(p).cast::<u8>(),0,4096);}},None=>{destroy(s);return None;}}}
     let [root,pdpt,pd,pt_code,pt_stack,text,stack]=s.owned;s.root=root;
@@ -27,7 +27,6 @@ pub fn create(code:&[u8],args:&[u8])->Option<Space>{
         pointer(pd).add(2).write(pt_code|7);pointer(pd).add(4).write(pt_stack|7);
         pointer(pt_code).write(text|5);pointer(pt_stack).write(stack|7|(1<<63));
         ptr::copy_nonoverlapping(code.as_ptr(),pointer(text).cast::<u8>(),code.len());
-        ptr::copy_nonoverlapping(args.as_ptr(),pointer(stack).cast::<u8>(),args.len());
     }
     Some(s)
 }
@@ -38,11 +37,4 @@ pub fn read_user(space:&Space,address:u64,length:usize)->Option<&'static [u8]>{
     let (base,physical)=if address>=CODE&&end<=CODE+PAGE{(CODE,space.owned[5])}else if address>=STACK&&end<=STACK+PAGE{(STACK,space.owned[6])}else{return None;};
     // Safety: validated own mapped page, copied via supervisor HHDM, handler excludes teardown.
     Some(unsafe{core::slice::from_raw_parts((pointer(physical)as usize+(address-base)as usize)as *const u8,length)})
-}
-
-/// Only the process's own writable NX stack is an output destination.
-pub fn write_user(space:&Space,address:u64,data:&[u8])->bool{
- if data.len()>256{return false;}let Some(end)=address.checked_add(data.len()as u64)else{return false;};
- if address<STACK||end>STACK+PAGE{return false;}
- unsafe{ptr::copy_nonoverlapping(data.as_ptr(),(pointer(space.owned[6])as usize+(address-STACK)as usize)as *mut u8,data.len());}true
 }

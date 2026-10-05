@@ -5,7 +5,7 @@ from pathlib import Path
 root=Path(__file__).resolve().parents[2]
 p=argparse.ArgumentParser(); p.add_argument('--out',type=Path,required=True); a=p.parse_args(); out=a.out.resolve()
 receipt=json.loads((out/'build.json').read_text())
-required={'licenses/dejavu/LICENSE','LICENSE','NOTICE','THIRD_PARTY.md','licenses/limine/LICENSE','licenses/limine/3RDPARTY.md','licenses/rust/COPYRIGHT-library.html','licenses/rust/texts/Apache-2.0.txt','licenses/rust/texts/MIT.txt','licenses/rust/texts/LLVM-exception.txt'}
+required={'LICENSE','NOTICE','THIRD_PARTY.md','licenses/limine/LICENSE','licenses/limine/3RDPARTY.md','licenses/rust/COPYRIGHT-library.html','licenses/rust/texts/Apache-2.0.txt','licenses/rust/texts/MIT.txt','licenses/rust/texts/LLVM-exception.txt'}
 if not required <= receipt['notice_sha256'].keys(): raise RuntimeError('Incomplete notice inventory')
 with tempfile.TemporaryDirectory(prefix='haios-notices-') as tmp:
     destination=Path(tmp)/'iso'

@@ -8,14 +8,7 @@ use core::arch::global_asm;
 #[path = "../userspace/image.rs"] mod image;
 #[path = "../ipc/mailbox.rs"] mod mailbox;
 #[path = "../scheduler/process.rs"] mod process;
-#[path = "../drivers/virtio_block.rs"] mod block;
 mod console;
-mod help;
-mod power;
-mod editor;
-#[path = "../drivers/framebuffer/mod.rs"] mod framebuffer;
-#[path = "../drivers/keyboard/mod.rs"] mod keyboard;
-#[path = "../fs/mod.rs"] mod fs;
 global_asm!(include_str!("../arch/x86_64/entry.S"));
 unsafe extern "C" { fn haios_halt() -> !; }
 fn halt() -> ! { unsafe { haios_halt() } }
@@ -33,13 +26,6 @@ pub extern "C" fn kernel_main() -> ! {
                 && serial::write(b" usable_bytes=") && serial::number(summary.usable_bytes)
                 && serial::write(b"\nHAIOS:BOOT:OK\n");
             if !ok { halt(); }
-            match limine::framebuffer() { Ok(c) => { framebuffer::init(c); serial::write(b"HAIOS:VIDEO:OK\n"); }, Err(e) => { serial::write(e); serial::write(b"\nHAIOS:VIDEO:UNAVAILABLE\n"); } }
-            if keyboard::init() { serial::write(b"HAIOS:KEYBOARD:OK\n"); } else { serial::write(b"HAIOS:KEYBOARD:UNAVAILABLE\n"); }
-            fs::init();
-            match block::init(summary.hhdm_offset).and_then(|_|fs::durable::mount()){
-                Ok(())=>{serial::write(b"HAIOS:DISK:READY\n");fs::durable::status();},
-                Err(e)=>{let reason=match e{block::Error::Absent=>"brak dysku",block::Error::ReadOnly=>"tylko odczyt",block::Error::Timeout=>"limit oczekiwania",block::Error::Memory=>"brak pamięci DMA",block::Error::Bounds=>"zakres",block::Error::Unsupported=>"nieobsługiwany dysk",block::Error::Io=>"błąd I/O",block::Error::Protocol=>"niepoprawny format lub protokół"};serial::write(b"HAIOS:DISK:UNAVAILABLE ");serial::write(reason.as_bytes());serial::write(b"\n");}
-            }
             interrupts::init();
             memory::vmm::init(summary.hhdm_offset);
             console::ready();

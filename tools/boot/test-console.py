@@ -2,7 +2,7 @@
 """Interact through COM1, verify preemption, isolation, IPC, teardown; no host disks/NIC."""
 import argparse,hashlib,json,re,select,shutil,socket,subprocess,tempfile,time
 from pathlib import Path
-p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);p.add_argument('--uefi',action='store_true');p.add_argument('--stress-seconds',type=int,default=0);a=p.parse_args();out=a.out.resolve()
+p=argparse.ArgumentParser();p.add_argument('--out',type=Path,required=True);p.add_argument('--uefi',action='store_true');a=p.parse_args();out=a.out.resolve()
 with tempfile.TemporaryDirectory(prefix='haios-console-')as directory:
     work=Path(directory);serial=work/'serial.sock';qmp=work/'qmp.sock'
     command=['qemu-system-x86_64','-machine','q35,accel=kvm','-cpu','host','-smp','1','-m','256M','-display','none','-monitor','none','-serial','unix:'+str(serial)+',server=on,wait=on','-qmp','unix:'+str(qmp)+',server=on,wait=off','-nic','none','-no-reboot','-no-shutdown','-boot','d','-drive','file='+str(out/'haios.iso')+',media=cdrom,readonly=on,format=raw']
@@ -33,8 +33,8 @@ with tempfile.TemporaryDirectory(prefix='haios-console-')as directory:
             wait(rb'haios> ',timeout=25)
             assert b'HAIOS:CONSOLE:READY' in transcript and b'HAIOS:PMM:OK' in transcript
             checks.append('boot/PMM/interactive prompt')
-            send('help',rb'help calc')
-            send('version',rb'HAIOS 0.3.0-dev console')
+            send('help',rb'Programs: hello count ipc fault writefault badptr spin')
+            send('version',rb'HAIOS 0.1.0-dev console')
             base=int(send('mem',rb'MEM free_frames=(\d+) page_bytes=').group(1))
             start=len(transcript);channel.sendall(b'run hello\n');wait(rb'hello:world\n',start);wait(rb'PROC:EXIT pid=\d+',start)
             assert int(send('mem',rb'MEM free_frames=(\d+) page_bytes=').group(1))==base
@@ -61,7 +61,7 @@ with tempfile.TemporaryDirectory(prefix='haios-console-')as directory:
             wait(rb'PROC:EXIT pid=\d+\n[\s\S]*PROC:EXIT pid=\d+',start)
             assert int(send('mem',rb'MEM free_frames=(\d+) page_bytes=').group(1))==base
             checks.append('IPC FIFO demonstration and teardown')
-            send('wrong',rb'ERROR command');send('x'*97,rb'ERROR line too long');send('ls',rb'RAM: hello');send('cat about',rb'HAIOS 0.3:')
+            send('wrong',rb'ERROR command');send('x'*97,rb'ERROR line too long');send('ls',rb'RAM: hello');send('cat about',rb'HAIOS RAM image')
             checks.append('invalid/long commands and RAM catalog')
             # Four fixed slots; failure creating an IPC pair must unwind its first child.
             spins=[int(send('run spin',rb'PROC:START pid=(\d+) name=spin').group(1))for _ in range(3)]
@@ -72,33 +72,6 @@ with tempfile.TemporaryDirectory(prefix='haios-console-')as directory:
             for pid in spins:send('kill '+str(pid),rb'PROC:EXIT pid='+str(pid).encode())
             assert int(send('mem',rb'MEM free_frames=(\d+) page_bytes=').group(1))==base
             checks.append('process capacity, partial-create rollback, final resource balance')
-            stress=None
-            if a.stress_seconds:
-                if a.stress_seconds<3600:raise ValueError('Acceptance stress requires at least 3600 seconds')
-                spin=int(send('run spin',rb'PROC:START pid=(\d+) name=spin').group(1))
-                steady=int(send('mem',rb'MEM free_frames=(\d+) page_bytes=').group(1))
-                assert steady==base-7
-                beginning=time.monotonic();cycles=0;samples=[];next_report=0.0
-                while time.monotonic()-beginning<a.stress_seconds:
-                    start=len(transcript);channel.sendall(b'run count\nrun count\n')
-                    wait(rb'count:done\n[\s\S]*count:done\n',start)
-                    wait(rb'PROC:EXIT pid=\d+\n[\s\S]*PROC:EXIT pid=\d+',start)
-                    start=len(transcript);channel.sendall(b'run ipc\n')
-                    wait(rb'ipc:sent\n',start);wait(rb'ipc:received\n',start)
-                    wait(rb'PROC:EXIT pid=\d+\n[\s\S]*PROC:EXIT pid=\d+',start)
-                    start=len(transcript);channel.sendall(b'run fault\n')
-                    wait(rb'EXCEPTION vector=14 error=5 pid=',start);wait(rb'PROC:EXIT pid=\d+\n',start)
-                    free=int(send('mem',rb'MEM free_frames=(\d+) page_bytes=').group(1))
-                    assert free==steady,(cycles,free,steady)
-                    cycles+=1;elapsed=time.monotonic()-beginning
-                    if elapsed>=next_report:
-                        sample={'elapsed_seconds':round(elapsed,2),'cycles':cycles,'free_frames':free}
-                        samples.append(sample);print(json.dumps({'stress_progress':sample}),flush=True)
-                        next_report=elapsed+30
-                send('kill '+str(spin),rb'PROC:EXIT pid='+str(spin).encode()+rb'\n')
-                final=int(send('mem',rb'MEM free_frames=(\d+) page_bytes=').group(1));assert final==base
-                stress={'duration_seconds':time.monotonic()-beginning,'cycles':cycles,'background_spin':True,'steady_free_frames':steady,'final_free_frames':final,'samples':samples,'workload':'two count processes, IPC pair (MAX u64 and 42), deliberate user page fault, full frame balance each cycle'}
-                checks.append('one continuous hour of processes/IPC/faults with invariant resource balance')
             assert b'KERNEL:FAULT'not in transcript and b'HAIOS:PANIC'not in transcript
             monitor=socket.socket(socket.AF_UNIX);monitor.settimeout(2);monitor.connect(str(qmp));stream=monitor.makefile('rwb',buffering=0);json.loads(stream.readline())
             def request(name):
@@ -111,11 +84,8 @@ with tempfile.TemporaryDirectory(prefix='haios-console-')as directory:
             request('qmp_capabilities');status=request('query-status');assert status['status']=='running'
             assert not any(e['event']in ('RESET','SHUTDOWN','GUEST_PANICKED')for e in events)
             request('quit');process.wait(timeout=5);assert process.returncode==0
-            report={'passed':True,'firmware':'UEFI'if a.uefi else'BIOS','checks':checks,'baseline_free_frames':base,'iso_sha256':hashlib.sha256((out/'haios.iso').read_bytes()).hexdigest(),'serial':transcript[-65536:].decode(errors='replace'),'serial_sha256':hashlib.sha256(transcript).hexdigest(),'stress':stress,'qemu_command':command,'qmp_status':status,'termination_events':events,'exit':process.returncode}
-            if a.stress_seconds:
-                import gzip
-                (out/'stress-transcript.txt.gz').write_bytes(gzip.compress(bytes(transcript)))
-            (out/('test-console-'+report['firmware'].lower()+('-stress' if a.stress_seconds else '')+'.json')).write_text(json.dumps(report,indent=2)+'\n');print(json.dumps({k:v for k,v in report.items()if k!='serial'},indent=2))
+            report={'passed':True,'firmware':'UEFI'if a.uefi else'BIOS','checks':checks,'baseline_free_frames':base,'iso_sha256':hashlib.sha256((out/'haios.iso').read_bytes()).hexdigest(),'serial':transcript.decode(errors='replace'),'qemu_command':command,'qmp_status':status,'termination_events':events,'exit':process.returncode}
+            (out/('test-console-'+report['firmware'].lower()+'.json')).write_text(json.dumps(report,indent=2)+'\n');print(json.dumps({k:v for k,v in report.items()if k!='serial'},indent=2))
         except Exception:
             (out/'failed-console.log').write_bytes(transcript);print(transcript.decode(errors='replace'));print((work/'stderr').read_text());raise
         finally:

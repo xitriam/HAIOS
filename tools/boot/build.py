@@ -6,7 +6,6 @@ root = Path(__file__).resolve().parents[2]
 p = argparse.ArgumentParser()
 p.add_argument('--out', type=Path, required=True)
 p.add_argument('--missing-hhdm', action='store_true')
-p.add_argument('--storage-test-hooks', action='store_true',help='Test-only pause points; never distribute this kernel')
 a = p.parse_args(); out = a.out.resolve(); out.mkdir(parents=True, exist_ok=True)
 if out == root or root in out.parents: raise SystemExit('Output must be outside source tree')
 limine = Path.home()/'.local/share/haios/toolchain/limine-12.9.2/limine-binary'
@@ -19,9 +18,8 @@ with tarfile.open(archive) as tar:
     for name in ['limine-bios.sys','limine-bios-cd.bin','limine-uefi-cd.bin','BOOTX64.EFI','LICENSE','3RDPARTY.md']:
         assert (limine/name).read_bytes() == tar.extractfile('limine-binary/'+name).read()
 command = [str(Path.home()/'.cargo/bin/rustc'), '+1.99.0', '--edition=2024', '--target', 'x86_64-unknown-none', '-C', 'panic=abort', '-C', 'opt-level=2', '-C', 'relocation-model=static', '-C', 'link-arg=-T'+str(root/'boot/linker.ld'), '-C', 'link-arg=--build-id=none', str(root/'kernel/main.rs'), '-o', str(out/'haios.elf')]
-command += ['--remap-path-prefix',str(root)+'=HAIOS']
 if a.missing_hhdm: command += ['--cfg', 'haios_test_missing_hhdm']
-if a.storage_test_hooks: command += ['--cfg','haios_test_storage_hooks']
+command += ['--remap-path-prefix',str(root)+'=HAIOS']
 subprocess.run(command, check=True)
 stage = out/'iso-root'; stage.mkdir(exist_ok=True)
 (stage/'boot').mkdir(exist_ok=True); (stage/'EFI/BOOT').mkdir(parents=True, exist_ok=True)
@@ -34,7 +32,6 @@ shutil.copy2(limine/'BOOTX64.EFI', stage/'EFI/BOOT/BOOTX64.EFI')
 # Preserve each component's notices without relabeling upstream code as HAIOS.
 for name in ['LICENSE', 'NOTICE', 'THIRD_PARTY.md']:
     shutil.copy2(root/name, stage/name)
-shutil.copytree(root/'licenses/dejavu',stage/'licenses/dejavu',dirs_exist_ok=True)
 (stage/'licenses/limine').mkdir(parents=True, exist_ok=True)
 for name in ['LICENSE', '3RDPARTY.md']:
     shutil.copy2(limine/name, stage/'licenses/limine'/name)
@@ -51,6 +48,5 @@ for name in ['LICENSE', 'NOTICE', 'THIRD_PARTY.md']:
 iso = out/'haios.iso'
 subprocess.run(['xorriso','-as','mkisofs','-R','-r','-J','-b','limine-bios-cd.bin','-no-emul-boot','-boot-load-size','4','-boot-info-table','--efi-boot','limine-uefi-cd.bin','-efi-boot-part','--efi-boot-image','--protective-msdos-label',str(stage),'-o',str(iso)], check=True, capture_output=True)
 # CD BIOS path works without installing a bootloader into any host disk.
-inputs={str(f.relative_to(root)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(root.rglob('*')) if f.is_file() and (f.suffix in {'.rs','.S','.ld','.bin'} or f.relative_to(root).as_posix() in {'boot/limine.conf','tools/boot/build.py','LICENSE','NOTICE','THIRD_PARTY.md','licenses/dejavu/LICENSE'}) and '__pycache__' not in f.parts and f.relative_to(root).parts[0] not in {'tests','tools'} or f.is_file() and f.relative_to(root).as_posix()=='tools/boot/build.py'}
-report={'input_sha256':inputs,'storage_test_hooks':a.storage_test_hooks,'notice_sha256':notice_hashes,'rust_command':command,'missing_hhdm':a.missing_hhdm,'artifacts':{n:hashlib.sha256((out/n).read_bytes()).hexdigest() for n in ['haios.elf','haios.iso']}}
+report={'notice_sha256':notice_hashes,'rust_command':command,'missing_hhdm':a.missing_hhdm,'artifacts':{n:hashlib.sha256((out/n).read_bytes()).hexdigest() for n in ['haios.elf','haios.iso']}}
 (out/'build.json').write_text(json.dumps(report,indent=2)+'\n'); print(json.dumps(report,indent=2))

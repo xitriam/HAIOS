@@ -12,20 +12,6 @@ struct Map { revision: u64, count: u64, entries: *const *const Entry }
 struct Entry { base: u64, length: u64, kind: u64 }
 #[repr(C)]
 struct Paging { request: Request<Pair>, mode: u64, max_mode: u64, min_mode: u64 }
-#[repr(C)]
-struct Framebuffers{revision:u64,count:u64,entries:*const *const Framebuffer}
-#[repr(C)]
-struct Framebuffer{address:*mut u8,width:u64,height:u64,pitch:u64,bpp:u16,model:u8,red_size:u8,red_shift:u8,green_size:u8,green_shift:u8,blue_size:u8,blue_shift:u8,unused:[u8;7],edid_size:u64,edid:*const u8,mode_count:u64,modes:*const u8}
-#[used] #[unsafe(link_section = ".limine_requests")]
-static mut FRAMEBUFFER:Request<Framebuffers>=request(0x9d5827dcd881dd75,0xa3148604f6fab11b);
-pub fn framebuffer()->Result<crate::framebuffer::Config,&'static [u8]>{unsafe{
- let r=response(ptr::addr_of!(FRAMEBUFFER.response).read_volatile())?;if r.count==0||r.count>16{return Err(b"framebuffer-count");}
- let address=r.entries as usize;if address<0xffff800000000000||address%8!=0||address.checked_add(r.count as usize*8).is_none(){return Err(b"framebuffer-pointer");}
- let f=response(r.entries.read())?;if f.bpp!=32||f.model!=1||f.width<1248||f.width>4096||f.height<400||f.height>4096||f.pitch<f.width*4||f.pitch%4!=0||f.pitch>65536{return Err(b"framebuffer-geometry");}
- if [f.red_size,f.green_size,f.blue_size]!=[8;3]||[f.red_shift,f.green_shift,f.blue_shift].iter().any(|&s|s>24)||f.red_shift.abs_diff(f.green_shift)<8||f.red_shift.abs_diff(f.blue_shift)<8||f.green_shift.abs_diff(f.blue_shift)<8{return Err(b"framebuffer-format");}
- let bytes=f.pitch.checked_mul(f.height).filter(|&x|x<=64*1024*1024).ok_or(b"framebuffer-size" as &[u8])?;let base=f.address as usize;if base<0xffff800000000000||base%4!=0||base.checked_add(bytes as usize).is_none(){return Err(b"framebuffer-address");}
- Ok(crate::framebuffer::Config{address:base,width:f.width as usize,height:f.height as usize,pitch:f.pitch as usize,red:f.red_shift,green:f.green_shift,blue:f.blue_shift})
-}}
 const COMMON: [u64; 2] = [0xc7b1dd30df4c8b88, 0x0a82e883a194f07b];
 const fn request<T>(a: u64, b: u64) -> Request<T> {
     Request { id: [COMMON[0], COMMON[1], a, b], revision: 0, response: ptr::null() }
@@ -108,5 +94,3 @@ pub fn check() -> Result<Summary, &'static [u8]> {
         Ok(Summary { entries: map.count, usable_bytes: usable, hhdm_offset: hhdm.value, map })
     }
 }
-
-const _:()={assert!(core::mem::size_of::<Framebuffer>()==80);assert!(core::mem::offset_of!(Framebuffer,edid_size)==48);};
