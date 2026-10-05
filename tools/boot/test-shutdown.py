@@ -38,13 +38,13 @@ with tempfile.TemporaryDirectory(prefix='haios-power-') as td:
    mark=len(transcript);serial.sendall(s.encode()+b'\n');return wait(pattern,mark)
   def key(code):qmp('send-key',{'keys':[{'type':'qcode','data':code}],'hold-time':15});time.sleep(.03)
   wait(rb'haios> ')
-  send('shutdown extra',rb'ERROR command');send('version',rb'HAIOS 0.2.0-dev');checks.append('Invalid arguments leave console usable')
+  send('shutdown extra',rb'ERROR command');send('version',rb'HAIOS 0.3.0-dev');checks.append('Invalid arguments leave console usable')
   send('edit /home/power-test',rb'Nowa tre');send('shutdown',rb'edit> ');send('.cancel',rb'Anulowano');checks.append('Editor treats shutdown as text')
   send('run spin',rb'PROC:START pid=\d+ name=spin')
   for code in ['s','h','u','t','tab']:key(code)
   time.sleep(.1);qmp('screendump',{'filename':str(out/'shutdown-input.ppm')});key('ret')
   if a.unsupported_machine:
-   wait(rb'ERROR shutdown:');send('version',rb'HAIOS 0.2.0-dev');assert vm.poll() is None and not any(e['event']=='SHUTDOWN' for e in events)
+   wait(rb'ERROR shutdown:');send('version',rb'HAIOS 0.3.0-dev');assert vm.poll() is None and not any(e['event']=='SHUTDOWN' for e in events)
    checks.append('Unsupported chipset rejects power-off and preserves console');qmp('quit');vm.wait(timeout=10)
   else:
    # No host quit/powerdown: guest command must cause the event and process exit.
