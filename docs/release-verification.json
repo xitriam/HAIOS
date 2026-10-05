@@ -1,0 +1,80 @@
+{
+  "passed": true,
+  "public_repo": "https://github.com/xitriam/HAIOS",
+  "latest_stable": "v0.2.0",
+  "verified_without_login": true,
+  "releases": [
+    {
+      "version": "0.1.0",
+      "url": "https://github.com/xitriam/HAIOS/releases/tag/v0.1.0",
+      "role": "old",
+      "source": {
+        "commit": "960181a0ebc8dd0c4f9da65a898d27ef220414cd",
+        "tree": "6f158149f02416e3644dc535bf4b68e7a9b6d152"
+      },
+      "download_verified": true,
+      "assets": [
+        {
+          "name": "HAIOS-0.1.0.tar.gz",
+          "size": 1777805,
+          "digest": "sha256:d2a55d987c2a948f10f693531694df0422830176c21db6674972497b0f7dffb5",
+          "browser_download_url": "https://github.com/xitriam/HAIOS/releases/download/v0.1.0/HAIOS-0.1.0.tar.gz"
+        },
+        {
+          "name": "HAIOS-0.1.0.tar.gz.sha256",
+          "size": 85,
+          "digest": "sha256:213aa3b98e8445017e44f65af85754eda70b342bc164f6d9fd0ca3e3236ac301",
+          "browser_download_url": "https://github.com/xitriam/HAIOS/releases/download/v0.1.0/HAIOS-0.1.0.tar.gz.sha256"
+        }
+      ]
+    },
+    {
+      "version": "0.2.0",
+      "url": "https://github.com/xitriam/HAIOS/releases/tag/v0.2.0",
+      "role": "stable",
+      "source": {
+        "commit": "ff1138cefef347d53d5ff45fa5f4764271bb18aa",
+        "tree": "6f25669ecad084332dc58950c699d7c749cfe8be"
+      },
+      "download_verified": true,
+      "assets": [
+        {
+          "name": "HAIOS-0.2.0.tar.gz",
+          "size": 1884655,
+          "digest": "sha256:7ba35d3fe7d8e69647b1761410a493a708b28fffdcc63317122eb52a979d663c",
+          "browser_download_url": "https://github.com/xitriam/HAIOS/releases/download/v0.2.0/HAIOS-0.2.0.tar.gz"
+        },
+        {
+          "name": "HAIOS-0.2.0.tar.gz.sha256",
+          "size": 85,
+          "digest": "sha256:c8dcf35cd047512cab9db12e3fe2b7e122498c881b9191d2dc8b6d7b47fb43fb",
+          "browser_download_url": "https://github.com/xitriam/HAIOS/releases/download/v0.2.0/HAIOS-0.2.0.tar.gz.sha256"
+        }
+      ]
+    },
+    {
+      "version": "0.3.0",
+      "url": "https://github.com/xitriam/HAIOS/releases/tag/v0.3.0",
+      "role": "candidate",
+      "source": {
+        "commit": "3baf5906260fa51923cf224bed7c8a5d26502223",
+        "tree": "9862bb178cccd7c2905d6cb3a8ac14bb5b93ad7c"
+      },
+      "download_verified": true,
+      "assets": [
+        {
+          "name": "HAIOS-0.3.0.tar.gz",
+          "size": 1991884,
+          "digest": "sha256:c21a0c1c40ab7fe3358ab6cd6485dcf714548af1bc65c3e90a9251ef78248979",
+          "browser_download_url": "https://github.com/xitriam/HAIOS/releases/download/v0.3.0/HAIOS-0.3.0.tar.gz"
+        },
+        {
+          "name": "HAIOS-0.3.0.tar.gz.sha256",
+          "size": 85,
+          "digest": "sha256:6498ccc92790ac4940c75b43c139463de64aca9c3f03b54c104563663ab8661c",
+          "browser_download_url": "https://github.com/xitriam/HAIOS/releases/download/v0.3.0/HAIOS-0.3.0.tar.gz.sha256"
+        }
+      ]
+    }
+  ]
+}
